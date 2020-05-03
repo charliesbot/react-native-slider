@@ -1,4 +1,10 @@
-import { StyleProp, ViewStyle, ImageSourcePropType } from "react-native";
+import {
+  StyleProp,
+  ViewStyle,
+  ImageSourcePropType,
+  Animated,
+} from "react-native";
+import { defaultStyles } from "./Slider.style";
 
 export type SliderProps = {
   /**
@@ -71,7 +77,7 @@ export type SliderProps = {
    * Callback called when the user starts changing the value (e.g. when
    * the slider is pressed).
    */
-  onSlidingStart: () => void;
+  onSlidingStart: (arg: number) => void;
 
   /**
    * Callback called when the user finishes changing the value (e.g. when
@@ -79,7 +85,7 @@ export type SliderProps = {
    */
   onSlidingComplete: () => void;
 
-  styles: StyleProp<ViewStyle>;
+  styles: typeof defaultStyles;
 
   /**
    * The style applied to the slider container.
@@ -114,10 +120,18 @@ export type SliderProps = {
   /**
    * Custom Animation type. 'spring' or 'timing'.
    */
-  animationType: "spring" | "timing";
+  animationType: keyof Pick<typeof Animated, "spring" | "timing">;
 
   /**
    * Used to configure the animation parameters.  These are the same parameters in the Animated library.
    */
-  animationConfig: any;
+  animationConfig: Animated.SpringAnimationConfig &
+    Animated.TimingAnimationConfig;
 };
+
+export type SliderPropsEvents = keyof Pick<
+  SliderProps,
+  "onSlidingStart" | "onValueChange" | "onSlidingComplete"
+>;
+
+export type LayoutEvent = "containerSize" | "trackSize" | "thumbSize";
