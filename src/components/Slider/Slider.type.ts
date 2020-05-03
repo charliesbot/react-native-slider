@@ -1,4 +1,4 @@
-import { StyleProp, ViewStyle } from "react-native";
+import { StyleProp, ViewStyle, ImageSourcePropType } from "react-native";
 
 export type SliderProps = {
   /**
@@ -79,6 +79,8 @@ export type SliderProps = {
    */
   onSlidingComplete: () => void;
 
+  styles: StyleProp<ViewStyle>;
+
   /**
    * The style applied to the slider container.
    */
@@ -117,5 +119,5 @@ export type SliderProps = {
   /**
    * Used to configure the animation parameters.  These are the same parameters in the Animated library.
    */
-  animationConfig: PropTypes.object;
+  animationConfig: any;
 };

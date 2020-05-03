@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Animated,
@@ -9,174 +9,93 @@ import {
   I18nManager,
 } from "react-native";
 import { SliderProps } from "./Slider.type";
+import { defaultStyles } from "./Slider.style";
 
-const TRACK_SIZE = 4;
-const THUMB_SIZE = 20;
+const ThumbImage: React.FC<Pick<SliderProps, "thumbImage">> = props => {
+  const { thumbImage } = props;
 
-function Rect(x, y, width, height) {
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
-}
+  if (!thumbImage) {
+    return null;
+  }
 
-Rect.prototype.containsPoint = function(x, y) {
-  return (
-    x >= this.x &&
-    y >= this.y &&
-    x <= this.x + this.width &&
-    y <= this.y + this.height
-  );
+  return <Image source={thumbImage} />;
 };
 
-export const Slider: React.FC<SliderProps> = () => {};
+export const Slider: React.FC<SliderProps> = props => {
+  let panResponder;
 
-export default class Slider extends PureComponent {
-  static defaultProps = {
-    value: 0,
-    minimumValue: 0,
-    maximumValue: 1,
-    step: 0,
-    minimumTrackTintColor: "#3f3f3f",
-    maximumTrackTintColor: "#b3b3b3",
-    thumbTintColor: "#343434",
-    thumbTouchSize: { width: 40, height: 40 },
-    debugTouchArea: false,
-    animationType: "timing",
+  const {
+    animateTransitions,
+    animationType = "timing",
+    debugTouchArea = false,
+    maximumTrackTintColor = "#b3b3b3",
+    maximumValue = 1,
+    minimumTrackTintColor = "#3f3f3f",
+    minimumValue = 0,
+    step = 0,
+    style,
+    styles,
+    thumbImage,
+    thumbStyle,
+    thumbTintColor = "#343434",
+    thumbTouchSize = { width: 40, height: 40 },
+    trackStyle,
+    value = 0,
+  } = props;
+
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [trackSize, setTrackSize] = useState({ width: 0, height: 0 });
+  const [thumbSize, setThumbSize] = useState({ width: 0, height: 0 });
+  const [allMeasured, setAllMeasured] = useState(false);
+  const [currentValue, setCurrentValue] = useState(new Animated.Value(value));
+
+  useEffect(() => {
+    panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: handleStartShouldSetPanResponder,
+      onMoveShouldSetPanResponder: handleMoveShouldSetPanResponder,
+      onPanResponderGrant: handlePanResponderGrant,
+      onPanResponderMove: handlePanResponderMove,
+      onPanResponderRelease: handlePanResponderEnd,
+      onPanResponderTerminationRequest: handlePanResponderRequestEnd,
+      onPanResponderTerminate: handlePanResponderEnd,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (animateTransitions) {
+      setCurrentValueAnimated(value);
+    } else {
+      setCurrentValue(value);
+    }
+  }, [value]);
+
+  const mainStyles = styles || defaultStyles;
+  const thumbLeft = currentValue.interpolate({
+    inputRange: [minimumValue, maximumValue],
+    outputRange: I18nManager.isRTL
+      ? [0, -(containerSize.width - thumbSize.width)]
+      : [0, containerSize.width - thumbSize.width],
+  });
+  const minimumTrackWidth = currentValue.interpolate({
+    inputRange: [minimumValue, maximumValue],
+    outputRange: [0, containerSize.width - thumbSize.width],
+  });
+
+  const valueVisibleStyle = {};
+
+  if (!allMeasured) {
+    valueVisibleStyle.opacity = 0;
+  }
+
+  const minimumTrackStyle = {
+    position: "absolute",
+    width: Animated.add(minimumTrackWidth, thumbSize.width / 2),
+    backgroundColor: minimumTrackTintColor,
+    ...valueVisibleStyle,
   };
 
-  state = {
-    containerSize: { width: 0, height: 0 },
-    trackSize: { width: 0, height: 0 },
-    thumbSize: { width: 0, height: 0 },
-    allMeasured: false,
-    value: new Animated.Value(this.props.value),
-  };
-
-  componentWillMount() {
-    this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
-      onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
-      onPanResponderGrant: this._handlePanResponderGrant,
-      onPanResponderMove: this._handlePanResponderMove,
-      onPanResponderRelease: this._handlePanResponderEnd,
-      onPanResponderTerminationRequest: this._handlePanResponderRequestEnd,
-      onPanResponderTerminate: this._handlePanResponderEnd,
-    });
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const newValue = nextProps.value;
-
-    if (this.props.value !== newValue) {
-      if (this.props.animateTransitions) {
-        this._setCurrentValueAnimated(newValue);
-      } else {
-        this._setCurrentValue(newValue);
-      }
-    }
-  }
-
-  render() {
-    const {
-      minimumValue,
-      maximumValue,
-      minimumTrackTintColor,
-      maximumTrackTintColor,
-      thumbTintColor,
-      thumbImage,
-      styles,
-      style,
-      trackStyle,
-      thumbStyle,
-      debugTouchArea,
-      onValueChange,
-      thumbTouchSize,
-      animationType,
-      animateTransitions,
-      ...other
-    } = this.props;
-    const {
-      value,
-      containerSize,
-      trackSize,
-      thumbSize,
-      allMeasured,
-    } = this.state;
-    const mainStyles = styles || defaultStyles;
-    const thumbLeft = value.interpolate({
-      inputRange: [minimumValue, maximumValue],
-      outputRange: I18nManager.isRTL
-        ? [0, -(containerSize.width - thumbSize.width)]
-        : [0, containerSize.width - thumbSize.width],
-      // extrapolate: 'clamp',
-    });
-    const minimumTrackWidth = value.interpolate({
-      inputRange: [minimumValue, maximumValue],
-      outputRange: [0, containerSize.width - thumbSize.width],
-      // extrapolate: 'clamp',
-    });
-    const valueVisibleStyle = {};
-    if (!allMeasured) {
-      valueVisibleStyle.opacity = 0;
-    }
-
-    const minimumTrackStyle = {
-      position: "absolute",
-      width: Animated.add(minimumTrackWidth, thumbSize.width / 2),
-      backgroundColor: minimumTrackTintColor,
-      ...valueVisibleStyle,
-    };
-
-    const touchOverflowStyle = this._getTouchOverflowStyle();
-
-    return (
-      <View
-        {...other}
-        style={[mainStyles.container, style]}
-        onLayout={this._measureContainer}
-      >
-        <View
-          style={[
-            { backgroundColor: maximumTrackTintColor },
-            mainStyles.track,
-            trackStyle,
-          ]}
-          renderToHardwareTextureAndroid
-          onLayout={this._measureTrack}
-        />
-        <Animated.View
-          renderToHardwareTextureAndroid
-          style={[mainStyles.track, trackStyle, minimumTrackStyle]}
-        />
-        <Animated.View
-          onLayout={this._measureThumb}
-          renderToHardwareTextureAndroid
-          style={[
-            { backgroundColor: thumbTintColor },
-            mainStyles.thumb,
-            thumbStyle,
-            {
-              transform: [{ translateX: thumbLeft }, { translateY: 0 }],
-              ...valueVisibleStyle,
-            },
-          ]}
-        >
-          {this._renderThumbImage()}
-        </Animated.View>
-        <View
-          renderToHardwareTextureAndroid
-          style={[defaultStyles.touchArea, touchOverflowStyle]}
-          {...this._panResponder.panHandlers}
-        >
-          {debugTouchArea === true &&
-            this._renderDebugThumbTouchRect(minimumTrackWidth)}
-        </View>
-      </View>
-    );
-  }
-
-  _getPropsForComponentUpdate(props) {
+  const touchOverflowStyle = getTouchOverflowStyle();
+  const getPropsForComponentUpdate = props => {
     const {
       value,
       onValueChange,
@@ -189,8 +108,54 @@ export default class Slider extends PureComponent {
     } = props;
 
     return otherProps;
-  }
+  };
 
+  return (
+    <View
+      {...props}
+      style={[mainStyles.container, style]}
+      onLayout={measureContainer}
+    >
+      <View
+        style={[
+          { backgroundColor: maximumTrackTintColor },
+          mainStyles.track,
+          trackStyle,
+        ]}
+        renderToHardwareTextureAndroid
+        onLayout={measureTrack}
+      />
+      <Animated.View
+        renderToHardwareTextureAndroid
+        style={[mainStyles.track, trackStyle, minimumTrackStyle]}
+      />
+      <Animated.View
+        onLayout={measureThumb}
+        renderToHardwareTextureAndroid
+        style={[
+          { backgroundColor: thumbTintColor },
+          mainStyles.thumb,
+          thumbStyle,
+          {
+            transform: [{ translateX: thumbLeft }, { translateY: 0 }],
+            ...valueVisibleStyle,
+          },
+        ]}
+      >
+        <ThumbImage thumbImage={thumbImage} />
+      </Animated.View>
+      <View
+        renderToHardwareTextureAndroid
+        style={[defaultStyles.touchArea, touchOverflowStyle]}
+        {...panResponder.panHandlers}
+      >
+        {debugTouchArea && renderDebugThumbTouchRect(minimumTrackWidth)}
+      </View>
+    </View>
+  );
+};
+
+export default class Slider extends PureComponent {
   _handleStartShouldSetPanResponder = (
     e: Object /* gestureState: Object */
   ): boolean =>
@@ -401,59 +366,4 @@ export default class Slider extends PureComponent {
       props.thumbTouchSize.height
     );
   };
-
-  _renderDebugThumbTouchRect = thumbLeft => {
-    const thumbTouchRect = this._getThumbTouchRect();
-    const positionStyle = {
-      left: thumbLeft,
-      top: thumbTouchRect.y,
-      width: thumbTouchRect.width,
-      height: thumbTouchRect.height,
-    };
-
-    return (
-      <Animated.View
-        style={[defaultStyles.debugThumbTouchArea, positionStyle]}
-        pointerEvents="none"
-      />
-    );
-  };
-
-  _renderThumbImage = () => {
-    const { thumbImage } = this.props;
-
-    if (!thumbImage) return;
-
-    return <Image source={thumbImage} />;
-  };
 }
-
-var defaultStyles = StyleSheet.create({
-  container: {
-    height: 40,
-    justifyContent: "center",
-  },
-  track: {
-    height: TRACK_SIZE,
-    borderRadius: TRACK_SIZE / 2,
-  },
-  thumb: {
-    position: "absolute",
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
-  },
-  touchArea: {
-    position: "absolute",
-    backgroundColor: "transparent",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  debugThumbTouchArea: {
-    position: "absolute",
-    backgroundColor: "green",
-    opacity: 0.5,
-  },
-});
