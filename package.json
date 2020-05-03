@@ -19,7 +19,8 @@
     "prepare": "tsdx build"
   },
   "peerDependencies": {
-    "react": ">=16"
+    "react": ">=16",
+    "react-native": ">=0.60"
   },
   "husky": {
     "hooks": {
@@ -31,6 +32,7 @@
   "module": "dist/react-native-slider.esm.js",
   "devDependencies": {
     "@types/react": "^16.9.34",
+    "@types/react-native": "^0.62.5",
     "husky": "^4.2.5",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
