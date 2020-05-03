@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { StyleSheet, Image, Easing, Animated, PanResponder, I18nManager, View } from 'react-native';
-import { DebugThumbTouchRect } from 'components/DebugThumbTouchRect/DebugThumbTouchRect';
 
 function _extends() {
   _extends = Object.assign || function (target) {
@@ -113,6 +112,27 @@ var setCurrentValueAnimated = function setCurrentValueAnimated(args) {
 };
 var getCurrentValue = function getCurrentValue(currentValue) {
   return currentValue.__getValue();
+};
+
+var DebugThumbTouchRect = function DebugThumbTouchRect(props) {
+  var debugTouchArea = props.debugTouchArea,
+      thumbLeft = props.thumbLeft,
+      thumbTouchRect = props.thumbTouchRect;
+
+  if (!debugTouchArea || !thumbTouchRect) {
+    return null;
+  }
+
+  var positionStyle = {
+    left: thumbLeft,
+    top: thumbTouchRect.y,
+    width: thumbTouchRect.width,
+    height: thumbTouchRect.height
+  };
+  return React.createElement(Animated.View, {
+    style: [defaultStyles.debugThumbTouchArea, positionStyle],
+    pointerEvents: "none"
+  });
 };
 
 var initialState = {

@@ -30,7 +30,7 @@ const SliderContainer = props => {
         </Text>
       </View>
       {React.Children.map(children, child => {
-        if (child.type === Slider || child.type === ReactNative.Slider) {
+        if (child.type === Slider) {
           return React.cloneElement(child, {
             value: value,
             onValueChange: val => setValue(val),
@@ -46,9 +46,6 @@ const SliderContainer = props => {
 const SliderExample = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <SliderContainer caption="<React.Slider/>">
-        <ReactNative.Slider />
-      </SliderContainer>
       <SliderContainer caption="<Slider/> with default style">
         <Slider />
       </SliderContainer>

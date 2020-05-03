@@ -7,7 +7,6 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var React = require('react');
 var React__default = _interopDefault(React);
 var reactNative = require('react-native');
-var DebugThumbTouchRect = require('components/DebugThumbTouchRect/DebugThumbTouchRect');
 
 function _extends() {
   _extends = Object.assign || function (target) {
@@ -120,6 +119,27 @@ var setCurrentValueAnimated = function setCurrentValueAnimated(args) {
 };
 var getCurrentValue = function getCurrentValue(currentValue) {
   return currentValue.__getValue();
+};
+
+var DebugThumbTouchRect = function DebugThumbTouchRect(props) {
+  var debugTouchArea = props.debugTouchArea,
+      thumbLeft = props.thumbLeft,
+      thumbTouchRect = props.thumbTouchRect;
+
+  if (!debugTouchArea || !thumbTouchRect) {
+    return null;
+  }
+
+  var positionStyle = {
+    left: thumbLeft,
+    top: thumbTouchRect.y,
+    width: thumbTouchRect.width,
+    height: thumbTouchRect.height
+  };
+  return React__default.createElement(reactNative.Animated.View, {
+    style: [defaultStyles.debugThumbTouchArea, positionStyle],
+    pointerEvents: "none"
+  });
 };
 
 var initialState = {
@@ -416,7 +436,7 @@ var Slider = function Slider(props) {
   })), React__default.createElement(reactNative.View, Object.assign({
     renderToHardwareTextureAndroid: true,
     style: [defaultStyles.touchArea, touchOverflowStyle]
-  }, (_panResponder$current = panResponder.current) === null || _panResponder$current === void 0 ? void 0 : _panResponder$current.panHandlers), React__default.createElement(DebugThumbTouchRect.DebugThumbTouchRect, {
+  }, (_panResponder$current = panResponder.current) === null || _panResponder$current === void 0 ? void 0 : _panResponder$current.panHandlers), React__default.createElement(DebugThumbTouchRect, {
     debugTouchArea: debugTouchArea,
     thumbLeft: minimumTrackWidth,
     thumbTouchRect: getThumbTouchRect()

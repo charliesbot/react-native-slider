@@ -16,7 +16,7 @@ import { defaultStyles } from "./Slider.style";
 import { ThumbImage } from "../ThumbImage/ThumbImage";
 import { Rect } from "../../utils/Rect";
 import { getCurrentValue, setCurrentValueAnimated } from "../../utils/helper";
-import { DebugThumbTouchRect } from "components/DebugThumbTouchRect/DebugThumbTouchRect";
+import { DebugThumbTouchRect } from "../DebugThumbTouchRect/DebugThumbTouchRect";
 
 const initialState = {
   width: 0,

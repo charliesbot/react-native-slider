@@ -1,8 +1,8 @@
 import React from "react";
 import { Animated } from "react-native";
-import { SliderProps } from "components/Slider/Slider.type";
-import { Rect } from "utils/Rect";
-import { defaultStyles } from "components/Slider/Slider.style";
+import { SliderProps } from "../Slider/Slider.type";
+import { Rect } from "../../utils/Rect";
+import { defaultStyles } from "../Slider/Slider.style";
 
 type DebugThumbTouchRectProps = Pick<SliderProps, "debugTouchArea"> & {
   thumbLeft: Animated.AnimatedInterpolation;
