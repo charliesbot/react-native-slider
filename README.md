@@ -1,167 +1,102 @@
-# TSDX React User Guide
+## react-native-slider
 
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
+[![npm version](http://img.shields.io/npm/v/react-native-slider.svg?style=flat-square)](https://npmjs.org/package/react-native-slider "View this project on npm")
+[![npm downloads](http://img.shields.io/npm/dm/react-native-slider.svg?style=flat-square)](https://npmjs.org/package/react-native-slider "View this project on npm")
+[![npm licence](http://img.shields.io/npm/l/react-native-slider.svg?style=flat-square)](https://npmjs.org/package/react-native-slider "View this project on npm")
+[![Platform](https://img.shields.io/badge/platform-ios%20%7C%20android-989898.svg?style=flat-square)](https://npmjs.org/package/react-native-slider "View this project on npm")
 
-> This TSDX setup is meant for developing React components (not apps!) that can be published to NPM. If you’re looking to build an app, you should use `create-react-app`, `razzle`, `nextjs`, `gatsby`, or `react-static`.
+A pure JavaScript `<Slider>` component for react-native. This is still very much a work
+in progress, ideas and contributions are very welcome.
 
-> If you’re new to TypeScript and React, checkout [this handy cheatsheet](https://github.com/sw-yx/react-typescript-cheatsheet/)
+<img src="https://raw.githubusercontent.com/jeanregisser/react-native-slider/master/Screenshots/basic@2x.png" width="375">
+<img src="https://raw.githubusercontent.com/jeanregisser/react-native-slider/master/Screenshots/basic_android_xxhdpi.png" width="360">
 
-## Commands
+It is a drop-in replacement for [Slider](http://facebook.github.io/react-native/docs/slider.html).
 
-TSDX scaffolds your new library inside `/src`, and also sets up a [Parcel-based](https://parceljs.org) playground for it inside `/example`.
-
-The recommended workflow is to run TSDX in one terminal:
-
-```bash
-npm start # or yarn start
-```
-
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
-
-Then run the example inside another:
-
-```bash
-cd example
-npm i # or yarn to install dependencies
-npm start # or yarn start
-```
-
-The default example imports and live reloads whatever is in `/dist`, so if you are seeing an out of date component, make sure TSDX is running in watch mode like we recommend above. **No symlinking required**, [we use Parcel's aliasing](https://github.com/palmerhq/tsdx/pull/88/files).
-
-To do a one-off build, use `npm run build` or `yarn build`.
-
-To run tests, use `npm test` or `yarn test`.
-
-## Configuration
-
-Code quality is [set up for you](https://github.com/palmerhq/tsdx/pull/45/files) with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
-
-### Jest
-
-Jest tests are set up to run with `npm test` or `yarn test`. This runs the test watcher (Jest) in an interactive mode. By default, runs tests related to files changed since the last commit.
-
-#### Setup Files
-
-This is the folder structure we set up for you:
+## Install
 
 ```shell
-/example
-  index.html
-  index.tsx       # test your component here in a demo app
-  package.json
-  tsconfig.json
-/src
-  index.tsx       # EDIT THIS
-/test
-  blah.test.tsx   # EDIT THIS
-.gitignore
-package.json
-README.md         # EDIT THIS
-tsconfig.json
+npm i --save react-native-slider
 ```
 
-#### React Testing Library
+**Note:** I try to maintain backward compatibility of this component with previous versions of React Native, but due to the nature of the platform, and the existence of breaking changes between releases, it is possible that you need to use a specific version of this component to support the exact version of React Native you are using. See the following table:
 
-We do not set up `react-testing-library` for you yet, we welcome contributions and documentation on this.
+| React Native version(s) | Supporting react-native-slider version(s) |
+|-------------------------|-------------------------------------------|
+| <0.25.0                 | <0.7.0                                    |
+| v0.25.x                 | v0.7.x                                    |
+| v0.26.0+                | v0.8.x                                    |
+| v0.43.0+                | v0.10.x                                   |
+| v0.44.0+                | v0.11.x                                   |
 
-### Rollup
+## Usage
 
-TSDX uses [Rollup v1.x](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
+```jsx
+import React from "react";
+import Slider from "react-native-slider";
+import { AppRegistry, StyleSheet, View, Text } from "react-native";
 
-### TypeScript
+class SliderExample extends React.Component {
+  state = {
+    value: 0.2
+  };
 
-`tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
-
-## Continuous Integration
-
-### Travis
-
-_to be completed_
-
-### Circle
-
-_to be completed_
-
-## Optimizations
-
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
-
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
+  render() {
+    return (
+      <View style={styles.container}>
+        <Slider
+          value={this.state.value}
+          onValueChange={value => this.setState({ value })}
+        />
+        <Text>
+          Value: {this.state.value}
+        </Text>
+      </View>
+    );
+  }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    marginLeft: 10,
+    marginRight: 10,
+    alignItems: "stretch",
+    justifyContent: "center"
+  }
+});
+
+AppRegistry.registerComponent("SliderExample", () => SliderExample);
 ```
 
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
+Try this example [live on Expo Snack](https://snack.expo.io/HkbAqpbwb).
 
-## Module Formats
+## Props
 
-CJS, ESModules, and UMD module formats are supported.
+Prop                  | Type     | Optional | Default                   | Description
+--------------------- | -------- | -------- | ------------------------- | -----------
+value                 | number   | Yes      | 0                         | Initial value of the slider
+disabled              | bool     | Yes      | false                     | If true the user won't be able to move the slider
+minimumValue          | number   | Yes      | 0                         | Initial minimum value of the slider
+maximumValue          | number   | Yes      | 1                         | Initial maximum value of the slider
+step                  | number   | Yes      | 0                         | Step value of the slider. The value should be between 0 and maximumValue - minimumValue)
+minimumTrackTintColor | string   | Yes      | '#3f3f3f'                 | The color used for the track to the left of the button
+maximumTrackTintColor | string   | Yes      | '#b3b3b3'                 | The color used for the track to the right of the button
+thumbTintColor        | string   | Yes      | '#343434'                 | The color used for the thumb
+thumbTouchSize        | object   | Yes      | `{width: 40, height: 40}` | The size of the touch area that allows moving the thumb. The touch area has the same center as the visible thumb. This allows to have a visually small thumb while still allowing the user to move it easily.
+onValueChange         | function | Yes      |                           | Callback continuously called while the user is dragging the slider
+onSlidingStart        | function | Yes      |                           | Callback called when the user starts changing the value (e.g. when the slider is pressed)
+onSlidingComplete     | function | Yes      |                           | Callback called when the user finishes changing the value (e.g. when the slider is released)
+style                 | [style](http://facebook.github.io/react-native/docs/view.html#style)    | Yes      |                           | The style applied to the slider container
+trackStyle            | [style](http://facebook.github.io/react-native/docs/view.html#style)    | Yes      |                           | The style applied to the track
+thumbStyle            | [style](http://facebook.github.io/react-native/docs/view.html#style)    | Yes      |                           | The style applied to the thumb
+thumbImage            | [source](http://facebook.github.io/react-native/docs/image.html#source)    | Yes      |                           | Sets an image for the thumb.
+debugTouchArea        | bool     | Yes      | false                     | Set this to true to visually see the thumb touch rect in green.
+animateTransitions    | bool     | Yes      | false                     | Set to true if you want to use the default 'spring' animation
+animationType         | string   | Yes      | 'timing'                  | Set to 'spring' or 'timing' to use one of those two types of animations with the default [animation properties](https://facebook.github.io/react-native/docs/animations.html).
+animationConfig       | object   | Yes      | undefined                 | Used to configure the animation parameters.  These are the same parameters in the [Animated library](https://facebook.github.io/react-native/docs/animations.html). 
 
-The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
 
-## Using the Playground
+---
 
-```bash
-cd example
-npm i # or yarn to install dependencies
-npm start # or yarn start
-```
-
-The default example imports and live reloads whatever is in `/dist`, so if you are seeing an out of date component, make sure TSDX is running in watch mode like we recommend above. **No symlinking required**!
-
-## Deploying the Playground
-
-The Playground is just a simple [Parcel](https://parceljs.org) app, you can deploy it anywhere you would normally deploy that. Here are some guidelines for **manually** deploying with the Netlify CLI (`npm i -g netlify-cli`):
-
-```bash
-cd example # if not already in the example folder
-npm run build # builds to dist
-netlify deploy # deploy the dist folder
-```
-
-Alternatively, if you already have a git repo connected, you can set up continuous deployment with Netlify:
-
-```bash
-netlify init
-# build command: yarn build && cd example && yarn && yarn build
-# directory to deploy: example/dist
-# pick yes for netlify.toml
-```
-
-## Named Exports
-
-Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
-
-## Including Styles
-
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
-
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
-
-## Publishing to NPM
-
-We recommend using [np](https://github.com/sindresorhus/np).
-
-## Usage with Lerna
-
-When creating a new package with TSDX within a project set up with Lerna, you might encounter a `Cannot resolve dependency` error when trying to run the `example` project. To fix that you will need to make changes to the `package.json` file _inside the `example` directory_.
-
-The problem is that due to the nature of how dependencies are installed in Lerna projects, the aliases in the example project's `package.json` might not point to the right place, as those dependencies might have been installed in the root of your Lerna project.
-
-Change the `alias` to point to where those packages are actually installed. This depends on the directory structure of your Lerna project, so the actual path might be different from the diff below.
-
-```diff
-   "alias": {
--    "react": "../node_modules/react",
--    "react-dom": "../node_modules/react-dom"
-+    "react": "../../../node_modules/react",
-+    "react-dom": "../../../node_modules/react-dom"
-   },
-```
-
-An alternative to fixing this problem would be to remove aliases altogether and define the dependencies referenced as aliases as dev dependencies instead. [However, that might cause other problems.](https://github.com/palmerhq/tsdx/issues/64)
+**MIT Licensed**
