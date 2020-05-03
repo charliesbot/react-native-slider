@@ -56,7 +56,7 @@ const Slider: React.FC<SliderProps> = props => {
 
   let previousLeft: any;
   const [containerSize, setContainerSize] = useState(initialState);
-  const [trackSize, setTrackSize] = useState(initialState);
+  const [, setTrackSize] = useState(initialState);
   const [thumbSize, setThumbSize] = useState(initialState);
   const [allMeasured, setAllMeasured] = useState(false);
   const [currentValue, setCurrentValue] = useState(new Animated.Value(value));
