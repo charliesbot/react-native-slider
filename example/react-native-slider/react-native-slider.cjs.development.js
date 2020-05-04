@@ -26,6 +26,27 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
+}
+
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
+  }
+
+  return target;
+}
+
 var TRACK_SIZE = 4;
 var THUMB_SIZE = 20;
 var defaultStyles = /*#__PURE__*/reactNative.StyleSheet.create({
@@ -58,16 +79,16 @@ var defaultStyles = /*#__PURE__*/reactNative.StyleSheet.create({
   }
 });
 
-var ThumbImage = function ThumbImage(props) {
-  var thumbImage = props.thumbImage;
-
-  if (!thumbImage) {
-    return null;
+var DEFAULT_ANIMATION_CONFIGS = {
+  spring: {
+    friction: 7,
+    tension: 100
+  },
+  timing: {
+    duration: 150,
+    easing: /*#__PURE__*/reactNative.Easing.inOut(reactNative.Easing.ease),
+    delay: 0
   }
-
-  return React__default.createElement(reactNative.Image, {
-    source: thumbImage
-  });
 };
 
 var Rect = /*#__PURE__*/function () {
@@ -93,357 +114,372 @@ var Rect = /*#__PURE__*/function () {
   return Rect;
 }();
 
-var DEFAULT_ANIMATION_CONFIGS = {
-  spring: {
-    friction: 7,
-    tension: 100
-  },
-  timing: {
-    duration: 150,
-    easing: /*#__PURE__*/reactNative.Easing.inOut(reactNative.Easing.ease),
-    delay: 0
-  }
-};
+var Slider = /*#__PURE__*/function (_PureComponent) {
+  _inheritsLoose(Slider, _PureComponent);
 
-var setCurrentValueAnimated = function setCurrentValueAnimated(args) {
-  var value = args.value,
-      animationType = args.animationType,
-      animationConfig = args.animationConfig,
-      currentValue = args.currentValue;
+  function Slider() {
+    var _this;
 
-  var customAnimationConfig = _extends(_extends(_extends({}, DEFAULT_ANIMATION_CONFIGS[animationType]), animationConfig), {}, {
-    toValue: value
-  });
+    _this = _PureComponent.apply(this, arguments) || this;
+    _this.state = {
+      containerSize: {
+        width: 0,
+        height: 0
+      },
+      trackSize: {
+        width: 0,
+        height: 0
+      },
+      thumbSize: {
+        width: 0,
+        height: 0
+      },
+      allMeasured: false,
+      value: new reactNative.Animated.Value(_this.props.value)
+    };
 
-  reactNative.Animated[animationType](currentValue, customAnimationConfig).start();
-};
-var getCurrentValue = function getCurrentValue(currentValue) {
-  return currentValue.__getValue();
-};
+    _this._handleStartShouldSetPanResponder = function (e
+    /* gestureState: Object */
+    ) {
+      return (// Should we become active when the user presses down on the thumb?
+        _this._thumbHitTest(e)
+      );
+    };
 
-var DebugThumbTouchRect = function DebugThumbTouchRect(props) {
-  var debugTouchArea = props.debugTouchArea,
-      thumbLeft = props.thumbLeft,
-      thumbTouchRect = props.thumbTouchRect;
+    _this._handlePanResponderGrant = function ()
+    /* e: Object, gestureState: Object */
+    {
+      _this._previousLeft = _this._getThumbLeft(_this._getCurrentValue());
 
-  if (!debugTouchArea || !thumbTouchRect) {
-    return null;
-  }
+      _this._fireChangeEvent("onSlidingStart");
+    };
 
-  var positionStyle = {
-    left: thumbLeft,
-    top: thumbTouchRect.y,
-    width: thumbTouchRect.width,
-    height: thumbTouchRect.height
-  };
-  return React__default.createElement(reactNative.Animated.View, {
-    style: [defaultStyles.debugThumbTouchArea, positionStyle],
-    pointerEvents: "none"
-  });
-};
+    _this._handlePanResponderMove = function (e, gestureState) {
+      if (_this.props.disabled) {
+        return;
+      }
 
-var initialState = {
-  width: 0,
-  height: 0
-};
-var sizes = {};
+      _this._setCurrentValue(_this._getValue(gestureState));
 
-var Slider = function Slider(props) {
-  var _panResponder$current;
+      _this._fireChangeEvent("onValueChange");
+    };
 
-  var panResponder = React.useRef(null);
-  var animationConfig = props.animationConfig,
-      animateTransitions = props.animateTransitions,
-      _props$animationType = props.animationType,
-      animationType = _props$animationType === void 0 ? "timing" : _props$animationType,
-      _props$debugTouchArea = props.debugTouchArea,
-      debugTouchArea = _props$debugTouchArea === void 0 ? false : _props$debugTouchArea,
-      _props$maximumTrackTi = props.maximumTrackTintColor,
-      maximumTrackTintColor = _props$maximumTrackTi === void 0 ? "#b3b3b3" : _props$maximumTrackTi,
-      _props$maximumValue = props.maximumValue,
-      maximumValue = _props$maximumValue === void 0 ? 1 : _props$maximumValue,
-      _props$minimumTrackTi = props.minimumTrackTintColor,
-      minimumTrackTintColor = _props$minimumTrackTi === void 0 ? "#3f3f3f" : _props$minimumTrackTi,
-      _props$minimumValue = props.minimumValue,
-      minimumValue = _props$minimumValue === void 0 ? 0 : _props$minimumValue,
-      _props$step = props.step,
-      step = _props$step === void 0 ? 0 : _props$step,
-      styles = props.styles,
-      style = props.style,
-      thumbImage = props.thumbImage,
-      thumbStyle = props.thumbStyle,
-      _props$thumbTintColor = props.thumbTintColor,
-      thumbTintColor = _props$thumbTintColor === void 0 ? "#343434" : _props$thumbTintColor,
-      _props$thumbTouchSize = props.thumbTouchSize,
-      thumbTouchSize = _props$thumbTouchSize === void 0 ? {
-    width: 40,
-    height: 40
-  } : _props$thumbTouchSize,
-      trackStyle = props.trackStyle,
-      _props$value = props.value,
-      value = _props$value === void 0 ? 0 : _props$value,
-      disabled = props.disabled;
-  var previousLeft;
+    _this._handlePanResponderEnd = function (e, gestureState) {
+      if (_this.props.disabled) {
+        return;
+      }
 
-  var _useState = React.useState(initialState),
-      containerSize = _useState[0],
-      setContainerSize = _useState[1];
+      _this._setCurrentValue(_this._getValue(gestureState));
 
-  var _useState2 = React.useState(initialState),
-      setTrackSize = _useState2[1];
+      _this._fireChangeEvent("onSlidingComplete");
+    };
 
-  var _useState3 = React.useState(initialState),
-      thumbSize = _useState3[0],
-      setThumbSize = _useState3[1];
+    _this._measureContainer = function (x) {
+      _this._handleMeasure("containerSize", x);
+    };
 
-  var _useState4 = React.useState(false),
-      allMeasured = _useState4[0],
-      setAllMeasured = _useState4[1];
+    _this._measureTrack = function (x) {
+      _this._handleMeasure("trackSize", x);
+    };
 
-  var _useState5 = React.useState(new reactNative.Animated.Value(value)),
-      currentValue = _useState5[0],
-      setCurrentValue = _useState5[1];
+    _this._measureThumb = function (x) {
+      _this._handleMeasure("thumbSize", x);
+    };
 
-  React.useEffect(function () {
-    panResponder.current = reactNative.PanResponder.create({
-      onStartShouldSetPanResponder: handleStartShouldSetPanResponder,
-      onMoveShouldSetPanResponder: handleMoveShouldSetPanResponder,
-      onPanResponderGrant: handlePanResponderGrant,
-      onPanResponderMove: handlePanResponderMove,
-      onPanResponderRelease: handlePanResponderEnd,
-      onPanResponderTerminationRequest: handlePanResponderRequestEnd,
-      onPanResponderTerminate: handlePanResponderEnd
-    });
-  }, []);
-  React.useEffect(function () {
-    if (animateTransitions) {
-      setCurrentValueAnimated({
-        value: value,
-        currentValue: currentValue,
-        animationConfig: animationConfig,
-        animationType: animationType
+    _this._handleMeasure = function (name, x) {
+      var _x$nativeEvent$layout = x.nativeEvent.layout,
+          width = _x$nativeEvent$layout.width,
+          height = _x$nativeEvent$layout.height;
+      var size = {
+        width: width,
+        height: height
+      };
+      var storeName = "_" + name;
+      var currentSize = _this[storeName];
+
+      if (currentSize && width === currentSize.width && height === currentSize.height) {
+        return;
+      }
+
+      _this[storeName] = size;
+
+      if (_this._containerSize && _this._trackSize && _this._thumbSize) {
+        _this.setState({
+          containerSize: _this._containerSize,
+          trackSize: _this._trackSize,
+          thumbSize: _this._thumbSize,
+          allMeasured: true
+        });
+      }
+    };
+
+    _this._getRatio = function (value) {
+      return (value - _this.props.minimumValue) / (_this.props.maximumValue - _this.props.minimumValue);
+    };
+
+    _this._getThumbLeft = function (value) {
+      var nonRtlRatio = _this._getRatio(value);
+
+      var ratio = reactNative.I18nManager.isRTL ? 1 - nonRtlRatio : nonRtlRatio;
+      return ratio * (_this.state.containerSize.width - _this.state.thumbSize.width);
+    };
+
+    _this._getValue = function (gestureState) {
+      var length = _this.state.containerSize.width - _this.state.thumbSize.width;
+      var thumbLeft = _this._previousLeft + gestureState.dx;
+      var nonRtlRatio = thumbLeft / length;
+      var ratio = reactNative.I18nManager.isRTL ? 1 - nonRtlRatio : nonRtlRatio;
+
+      if (_this.props.step) {
+        return Math.max(_this.props.minimumValue, Math.min(_this.props.maximumValue, _this.props.minimumValue + Math.round(ratio * (_this.props.maximumValue - _this.props.minimumValue) / _this.props.step) * _this.props.step));
+      }
+
+      return Math.max(_this.props.minimumValue, Math.min(_this.props.maximumValue, ratio * (_this.props.maximumValue - _this.props.minimumValue) + _this.props.minimumValue));
+    };
+
+    _this._getCurrentValue = function () {
+      return _this.state.value.__getValue();
+    };
+
+    _this._setCurrentValue = function (value) {
+      _this.state.value.setValue(value);
+    };
+
+    _this._setCurrentValueAnimated = function (value) {
+      var animationType = _this.props.animationType;
+      var animationConfig = Object.assign({}, DEFAULT_ANIMATION_CONFIGS[animationType], _this.props.animationConfig, {
+        toValue: value
       });
-    } else {
-      setCurrentValue(new reactNative.Animated.Value(value));
-    }
-  }, [value]);
-  var mainStyles = styles || defaultStyles;
-  var thumbLeft = currentValue.interpolate({
-    inputRange: [minimumValue, maximumValue],
-    outputRange: reactNative.I18nManager.isRTL ? [0, -(containerSize.width - thumbSize.width)] : [0, containerSize.width - thumbSize.width]
-  });
-
-  var getValue = function getValue(gestureState) {
-    var thumbLeft = previousLeft + gestureState.dx;
-    var nonRtlRatio = thumbLeft / length;
-    var ratio = reactNative.I18nManager.isRTL ? 1 - nonRtlRatio : nonRtlRatio;
-
-    if (step) {
-      return Math.max(minimumValue, Math.min(maximumValue, minimumValue + Math.round(ratio * (maximumValue - minimumValue) / step) * step));
-    }
-
-    return Math.max(minimumValue, Math.min(maximumValue, ratio * (maximumValue - minimumValue) + minimumValue));
-  };
-
-  var handlePanResponderMove = function handlePanResponderMove(_, gestureState) {
-    if (disabled) {
-      return;
-    }
-
-    setCurrentValue(new reactNative.Animated.Value(getValue(gestureState)));
-    fireChangeEvent("onValueChange");
-  };
-
-  var handlePanResponderRequestEnd = function handlePanResponderRequestEnd() {
-    // Should we allow another component to take over this pan?
-    return false;
-  };
-
-  var handlePanResponderEnd = function handlePanResponderEnd(_, gestureState) {
-    if (disabled) {
-      return;
-    }
-
-    setCurrentValue(new reactNative.Animated.Value(getValue(gestureState)));
-    fireChangeEvent("onSlidingComplete");
-  };
-
-  var handleMeasure = function handleMeasure(name, x) {
-    var _x$nativeEvent$layout = x.nativeEvent.layout,
-        width = _x$nativeEvent$layout.width,
-        height = _x$nativeEvent$layout.height;
-    var size = {
-      width: width,
-      height: height
+      reactNative.Animated[animationType](_this.state.value, animationConfig).start();
     };
-    var currentSize = sizes[name];
 
-    if (currentSize && width === currentSize.width && height === currentSize.height) {
-      return;
-    }
-
-    sizes[name] = size;
-
-    if (sizes.containerSize && sizes.trackSize && sizes.thumbSize) {
-      setContainerSize(sizes.containerSize);
-      setTrackSize(sizes.trackSize);
-      setThumbSize(sizes.thumbSize);
-      setAllMeasured(true);
-    }
-  };
-
-  var onLayoutChange = function onLayoutChange(eventName) {
-    return function (event) {
-      return handleMeasure(eventName, event);
+    _this._fireChangeEvent = function (event) {
+      if (_this.props[event]) {
+        _this.props[event](_this._getCurrentValue());
+      }
     };
+
+    _this._getTouchOverflowSize = function () {
+      var state = _this.state;
+      var props = _this.props;
+      var size = {};
+
+      if (state.allMeasured === true) {
+        size.width = Math.max(0, props.thumbTouchSize.width - state.thumbSize.width);
+        size.height = Math.max(0, props.thumbTouchSize.height - state.containerSize.height);
+      }
+
+      return size;
+    };
+
+    _this._getTouchOverflowStyle = function () {
+      var _this$_getTouchOverfl = _this._getTouchOverflowSize(),
+          width = _this$_getTouchOverfl.width,
+          height = _this$_getTouchOverfl.height;
+
+      var touchOverflowStyle = {};
+
+      if (width !== undefined && height !== undefined) {
+        var verticalMargin = -height / 2;
+        touchOverflowStyle.marginTop = verticalMargin;
+        touchOverflowStyle.marginBottom = verticalMargin;
+        var horizontalMargin = -width / 2;
+        touchOverflowStyle.marginLeft = horizontalMargin;
+        touchOverflowStyle.marginRight = horizontalMargin;
+      }
+
+      if (_this.props.debugTouchArea === true) {
+        touchOverflowStyle.backgroundColor = "orange";
+        touchOverflowStyle.opacity = 0.5;
+      }
+
+      return touchOverflowStyle;
+    };
+
+    _this._thumbHitTest = function (e) {
+      var nativeEvent = e.nativeEvent;
+
+      var thumbTouchRect = _this._getThumbTouchRect();
+
+      return thumbTouchRect.containsPoint({
+        x: nativeEvent.locationX,
+        y: nativeEvent.locationY
+      });
+    };
+
+    _this._getThumbTouchRect = function () {
+      var state = _this.state;
+      var props = _this.props;
+
+      var touchOverflowSize = _this._getTouchOverflowSize();
+
+      return new Rect({
+        x: touchOverflowSize.width / 2 + _this._getThumbLeft(_this._getCurrentValue()) + (state.thumbSize.width - props.thumbTouchSize.width) / 2,
+        y: touchOverflowSize.height / 2 + (state.containerSize.height - props.thumbTouchSize.height) / 2,
+        width: props.thumbTouchSize.width,
+        height: props.thumbTouchSize.height
+      });
+    };
+
+    _this._renderDebugThumbTouchRect = function (thumbLeft) {
+      var thumbTouchRect = _this._getThumbTouchRect();
+
+      var positionStyle = {
+        left: thumbLeft,
+        top: thumbTouchRect.y,
+        width: thumbTouchRect.width,
+        height: thumbTouchRect.height
+      };
+      return React__default.createElement(reactNative.Animated.View, {
+        style: [defaultStyles.debugThumbTouchArea, positionStyle],
+        pointerEvents: "none"
+      });
+    };
+
+    _this._renderThumbImage = function () {
+      var thumbImage = _this.props.thumbImage;
+      if (!thumbImage) return;
+      return React__default.createElement(reactNative.Image, {
+        source: thumbImage
+      });
+    };
+
+    return _this;
+  }
+
+  var _proto = Slider.prototype;
+
+  _proto.componentWillMount = function componentWillMount() {
+    this._panResponder = reactNative.PanResponder.create({
+      onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
+      onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
+      onPanResponderGrant: this._handlePanResponderGrant,
+      onPanResponderMove: this._handlePanResponderMove,
+      onPanResponderRelease: this._handlePanResponderEnd,
+      onPanResponderTerminationRequest: this._handlePanResponderRequestEnd,
+      onPanResponderTerminate: this._handlePanResponderEnd
+    });
   };
 
-  var measureContainer = onLayoutChange("containerSize");
-  var measureTrack = onLayoutChange("trackSize");
-  var measureThumb = onLayoutChange("thumbSize");
-  var minimumTrackWidth = currentValue.interpolate({
-    inputRange: [minimumValue, maximumValue],
-    outputRange: [0, containerSize.width - thumbSize.width]
-  });
+  _proto.componentWillReceiveProps = function componentWillReceiveProps(nextProps) {
+    var newValue = nextProps.value;
 
-  var fireChangeEvent = function fireChangeEvent(event) {
-    var _props$event;
-
-    (_props$event = props[event]) === null || _props$event === void 0 ? void 0 : _props$event.call(props, getCurrentValue(currentValue));
+    if (this.props.value !== newValue) {
+      if (this.props.animateTransitions) {
+        this._setCurrentValueAnimated(newValue);
+      } else {
+        this._setCurrentValue(newValue);
+      }
+    }
   };
 
-  var handlePanResponderGrant = function handlePanResponderGrant() {
-    previousLeft = getThumbLeft(getCurrentValue(currentValue));
-    fireChangeEvent("onSlidingStart");
-  };
+  _proto.render = function render() {
+    var _this$props = this.props,
+        minimumValue = _this$props.minimumValue,
+        maximumValue = _this$props.maximumValue,
+        minimumTrackTintColor = _this$props.minimumTrackTintColor,
+        maximumTrackTintColor = _this$props.maximumTrackTintColor,
+        thumbTintColor = _this$props.thumbTintColor,
+        styles = _this$props.styles,
+        style = _this$props.style,
+        trackStyle = _this$props.trackStyle,
+        thumbStyle = _this$props.thumbStyle,
+        debugTouchArea = _this$props.debugTouchArea,
+        other = _objectWithoutPropertiesLoose(_this$props, ["minimumValue", "maximumValue", "minimumTrackTintColor", "maximumTrackTintColor", "thumbTintColor", "thumbImage", "styles", "style", "trackStyle", "thumbStyle", "debugTouchArea", "onValueChange", "thumbTouchSize", "animationType", "animateTransitions"]);
 
-  var getTouchOverflowSize = function getTouchOverflowSize() {
-    var size = {};
+    var _this$state = this.state,
+        value = _this$state.value,
+        containerSize = _this$state.containerSize,
+        thumbSize = _this$state.thumbSize,
+        allMeasured = _this$state.allMeasured;
+    var mainStyles = styles || defaultStyles;
+    var thumbLeft = value.interpolate({
+      inputRange: [minimumValue, maximumValue],
+      outputRange: reactNative.I18nManager.isRTL ? [0, -(containerSize.width - thumbSize.width)] : [0, containerSize.width - thumbSize.width]
+    });
+    var minimumTrackWidth = value.interpolate({
+      inputRange: [minimumValue, maximumValue],
+      outputRange: [0, containerSize.width - thumbSize.width]
+    });
+    var valueVisibleStyle = {};
 
-    if (allMeasured) {
-      size.width = Math.max(0, thumbTouchSize.width - thumbSize.width);
-      size.height = Math.max(0, thumbTouchSize.height - containerSize.height);
+    if (!allMeasured) {
+      valueVisibleStyle.opacity = 0;
     }
 
-    return size;
+    var minimumTrackStyle = _extends({
+      position: "absolute",
+      width: reactNative.Animated.add(minimumTrackWidth, thumbSize.width / 2),
+      backgroundColor: minimumTrackTintColor
+    }, valueVisibleStyle);
+
+    var touchOverflowStyle = this._getTouchOverflowStyle();
+
+    return React__default.createElement(reactNative.View, Object.assign({}, other, {
+      style: [mainStyles.container, style],
+      onLayout: this._measureContainer
+    }), React__default.createElement(reactNative.View, {
+      style: [{
+        backgroundColor: maximumTrackTintColor
+      }, mainStyles.track, trackStyle],
+      renderToHardwareTextureAndroid: true,
+      onLayout: this._measureTrack
+    }), React__default.createElement(reactNative.Animated.View, {
+      renderToHardwareTextureAndroid: true,
+      style: [mainStyles.track, trackStyle, minimumTrackStyle]
+    }), React__default.createElement(reactNative.Animated.View, {
+      onLayout: this._measureThumb,
+      renderToHardwareTextureAndroid: true,
+      style: [{
+        backgroundColor: thumbTintColor
+      }, mainStyles.thumb, thumbStyle, _extends({
+        transform: [{
+          translateX: thumbLeft
+        }, {
+          translateY: 0
+        }]
+      }, valueVisibleStyle)]
+    }, this._renderThumbImage()), React__default.createElement(reactNative.View, Object.assign({
+      renderToHardwareTextureAndroid: true,
+      style: [defaultStyles.touchArea, touchOverflowStyle]
+    }, this._panResponder.panHandlers), debugTouchArea === true && this._renderDebugThumbTouchRect(minimumTrackWidth)));
   };
 
-  var getTouchOverflowStyle = function getTouchOverflowStyle() {
-    var _getTouchOverflowSize = getTouchOverflowSize(),
-        width = _getTouchOverflowSize.width,
-        height = _getTouchOverflowSize.height;
+  _proto._getPropsForComponentUpdate = function _getPropsForComponentUpdate(props) {
+    var otherProps = _objectWithoutPropertiesLoose(props, ["value", "onValueChange", "onSlidingStart", "onSlidingComplete", "style", "trackStyle", "thumbStyle"]);
 
-    var touchOverflowStyle = {};
-
-    if (width !== undefined && height !== undefined) {
-      var verticalMargin = -height / 2;
-      touchOverflowStyle.marginTop = verticalMargin;
-      touchOverflowStyle.marginBottom = verticalMargin;
-      var horizontalMargin = -width / 2;
-      touchOverflowStyle.marginLeft = horizontalMargin;
-      touchOverflowStyle.marginRight = horizontalMargin;
-    }
-
-    if (debugTouchArea) {
-      touchOverflowStyle.backgroundColor = "orange";
-      touchOverflowStyle.opacity = 0.5;
-    }
-
-    return touchOverflowStyle;
+    return otherProps;
   };
 
-  var getRatio = function getRatio(value) {
-    return (value - minimumValue) / (maximumValue - minimumValue);
-  };
-
-  var getThumbLeft = function getThumbLeft(value) {
-    var nonRtlRatio = getRatio(value);
-    var ratio = reactNative.I18nManager.isRTL ? 1 - nonRtlRatio : nonRtlRatio;
-    return ratio * (containerSize.width - thumbSize.width);
-  };
-
-  var handleStartShouldSetPanResponder = function handleStartShouldSetPanResponder(e) {
-    var _thumbTouchRect$conta;
-
-    // Should we become active when the user presses down on the thumb?
-    var nativeEvent = e.nativeEvent;
-    var thumbTouchRect = getThumbTouchRect();
-    return (_thumbTouchRect$conta = thumbTouchRect === null || thumbTouchRect === void 0 ? void 0 : thumbTouchRect.containsPoint({
-      x: nativeEvent.locationX,
-      y: nativeEvent.locationY
-    })) !== null && _thumbTouchRect$conta !== void 0 ? _thumbTouchRect$conta : false;
-  };
-
-  var handleMoveShouldSetPanResponder = function handleMoveShouldSetPanResponder() {
+  _proto._handleMoveShouldSetPanResponder = function _handleMoveShouldSetPanResponder()
+  /* e: Object, gestureState: Object */
+  {
     // Should we become active when the user moves a touch over the thumb?
     return false;
   };
 
-  var getThumbTouchRect = function getThumbTouchRect() {
-    var touchOverflowSize = getTouchOverflowSize();
-
-    if (!touchOverflowSize.width || !touchOverflowSize.height) {
-      return;
-    }
-
-    return new Rect({
-      x: touchOverflowSize.width / 2 + getThumbLeft(getCurrentValue(currentValue)) + (thumbSize.width - thumbTouchSize.width) / 2,
-      y: touchOverflowSize.height / 2 + (containerSize.height - thumbTouchSize.height) / 2,
-      width: thumbTouchSize.width,
-      height: thumbTouchSize.height
-    });
+  _proto._handlePanResponderRequestEnd = function _handlePanResponderRequestEnd(e, gestureState) {
+    // Should we allow another component to take over this pan?
+    return false;
   };
 
-  var valueVisibleStyle = {};
-
-  if (!allMeasured) {
-    valueVisibleStyle.opacity = 0;
-  }
-
-  var minimumTrackStyle = _extends({
-    position: "absolute",
-    width: reactNative.Animated.add(minimumTrackWidth, thumbSize.width / 2),
-    backgroundColor: minimumTrackTintColor
-  }, valueVisibleStyle);
-
-  var touchOverflowStyle = getTouchOverflowStyle();
-  return React__default.createElement(reactNative.View, Object.assign({}, props, {
-    style: [mainStyles.container, style],
-    onLayout: measureContainer
-  }), React__default.createElement(reactNative.View, {
-    style: [{
-      backgroundColor: maximumTrackTintColor
-    }, mainStyles.track, trackStyle],
-    renderToHardwareTextureAndroid: true,
-    onLayout: measureTrack
-  }), React__default.createElement(reactNative.Animated.View, {
-    renderToHardwareTextureAndroid: true,
-    style: [mainStyles.track, trackStyle, minimumTrackStyle]
-  }), React__default.createElement(reactNative.Animated.View, {
-    onLayout: measureThumb,
-    renderToHardwareTextureAndroid: true,
-    style: [{
-      backgroundColor: thumbTintColor
-    }, mainStyles.thumb, thumbStyle, _extends({
-      transform: [{
-        translateX: thumbLeft
-      }, {
-        translateY: 0
-      }]
-    }, valueVisibleStyle)]
-  }, React__default.createElement(ThumbImage, {
-    thumbImage: thumbImage
-  })), React__default.createElement(reactNative.View, Object.assign({
-    renderToHardwareTextureAndroid: true,
-    style: [defaultStyles.touchArea, touchOverflowStyle]
-  }, (_panResponder$current = panResponder.current) === null || _panResponder$current === void 0 ? void 0 : _panResponder$current.panHandlers), React__default.createElement(DebugThumbTouchRect, {
-    debugTouchArea: debugTouchArea,
-    thumbLeft: minimumTrackWidth,
-    thumbTouchRect: getThumbTouchRect()
-  })));
+  return Slider;
+}(React.PureComponent);
+Slider.defaultProps = {
+  value: 0,
+  minimumValue: 0,
+  maximumValue: 1,
+  step: 0,
+  minimumTrackTintColor: "#3f3f3f",
+  maximumTrackTintColor: "#b3b3b3",
+  thumbTintColor: "#343434",
+  thumbTouchSize: {
+    width: 40,
+    height: 40
+  },
+  debugTouchArea: false,
+  animationType: "timing"
 };
 
-var Slider$1 = /*#__PURE__*/React__default.memo(Slider);
-
-exports.default = Slider$1;
+exports.default = Slider;
 //# sourceMappingURL=react-native-slider.cjs.development.js.map
