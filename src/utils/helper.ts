@@ -2,13 +2,6 @@ import { Animated } from "react-native";
 import { SliderProps } from "../components/Slider/Slider.type";
 import { DEFAULT_ANIMATION_CONFIGS } from "../constants/animationConfig";
 
-export const setCurrentValue = (
-  currentValue: Animated.Value,
-  value: number
-) => {
-  currentValue.setValue(value);
-};
-
 type SetCurrentValueAnimatedArgs = Pick<
   SliderProps,
   "value" | "animationType" | "animationConfig"
@@ -16,7 +9,11 @@ type SetCurrentValueAnimatedArgs = Pick<
   currentValue: Animated.Value;
 };
 
-export const setCurrentValueAnimated = (args: SetCurrentValueAnimatedArgs) => {
+export const setValue = (currentValue: Animated.Value, value: number) => {
+  currentValue.setValue(value);
+};
+
+export const setAnimatedValue = (args: SetCurrentValueAnimatedArgs) => {
   const { value, animationType, animationConfig, currentValue } = args;
 
   const customAnimationConfig = {
@@ -28,5 +25,5 @@ export const setCurrentValueAnimated = (args: SetCurrentValueAnimatedArgs) => {
   Animated[animationType](currentValue, customAnimationConfig).start();
 };
 
-export const getCurrentValue = (currentValue: Animated.Value) =>
+export const getValue = (currentValue: Animated.Value) =>
   (currentValue as any).__getValue();
